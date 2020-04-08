@@ -1,31 +1,28 @@
-export default onAuthFailure => (url, opts) => {
-  const headers = {
-    token: 'fake token'
+
+export const getApiFetcher = (onAuthFailure) => async (url, opts) => {
+  // const headers = {
+  //   token: 'fake token'
+  // }
+  // const combinedOptions = Object.assign({}, { headers }, opts)
+  try {
+    const response = await fetch('https://www.thecocktaildb.com/api/json/v1/1/' + url)
+    if (response.statusCode === 401) {
+      throw Error('rejected')
+    }
+    return response.json()
+  } catch (error) {
+    if (error.message === 'rejected') {
+      onAuthFailure()
+      return
+    }
+    throw error
   }
+}
 
-  const combinedOptions = Object.assign({}, { headers }, opts)
-  return (
-    fetch('https://our.base-api-url.com' + url, combinedOptions)
-      // let's assume we're always getting JSON back
-      .then(res => {
-        // here we can check for whatever the API does
-        // when it fails auth
-        if (res.statusCode === 401) {
-          throw Error('rejected')
-        }
-
-        return res.json()
-      })
-      .catch(err => {
-        // Now we can call the function
-        // in this scenario
-        if (err.message === 'rejected') {
-          onAuthFailure()
-          return
-        }
-        // other wise we just want to handle our normal
-        // rejection
-        throw err
-      })
-  )
+function getTokenSilently() {
+  const response = new Promise
+  setTimeout(() => {
+    response.resolve('fakeToken')
+  }, 800);
+  return response
 }

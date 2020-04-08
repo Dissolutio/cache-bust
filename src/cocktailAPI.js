@@ -63,7 +63,10 @@ export const cocktailAPI = {
   },
   async apiCall(url, input = '') {
     const result = await fetch(url + input)
-      .then((response) => response.json())
+      .then((response) => {
+        console.log("apiCall -> response", response)
+        return response.json()
+      })
       .then((myJson) => myJson.drinks)
     return result
   },

@@ -1,17 +1,27 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import * as Sentry from '@sentry/browser';
+
 import App from './App';
+import { store } from './store'
+
 import * as serviceWorker from './serviceWorker';
 
+
 Sentry.init({ dsn: "https://abf54ce42681460cbea61d773becd43d@o374574.ingest.sentry.io/5192792" })
-ReactDOM.render(
-  <React.StrictMode>
+
+const AppWrapper = () => (
+  <Provider store={store} >
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>,
+  </Provider>
+)
+
+ReactDOM.render(
+  <AppWrapper />,
   document.getElementById('root')
 );
 
