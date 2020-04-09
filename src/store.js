@@ -2,12 +2,10 @@ import {
   createSlice,
   configureStore,
   getDefaultMiddleware,
-  applyMiddleware,
   combineReducers
 } from '@reduxjs/toolkit'
 
-import { getApiFetcher } from './getApifetcher'
-import { cocktailAPI } from './cocktailAPI'
+import { getRandomCocktail } from './cocktailAPI'
 import cherryRum from './sampleCocktails.json'
 
 const counterSlice = createSlice({
@@ -26,51 +24,68 @@ const counterSlice = createSlice({
 const cocktailsSlice = createSlice({
   name: 'cocktails',
   initialState: {
-    [cherryRum.idDrink]: cherryRum
+    cocktails: {
+      [cherryRum.idDrink]: cherryRum,
+    },
+    loading: false,
+    error: ''
+
   },
   reducers: {
-    add: (state, action) => {
-      console.log("action", action)
-      const newCocktail = action.payload
-      state[newCocktail.idDrink] = newCocktail
+    start: (state) => {
+      state.loading = true
+    },
+    fail: (state, action) => {
+      state.loading = false
+      state.error = action.payload
+    },
+    success: (state, action) => {
+      state.loading = false
+      state.error = ''
+      action.payload.forEach(cocktail => {
+        state.cocktails[cocktail.idDrink] = cocktail
+      })
     },
   }
 })
 
 const rootReducer = combineReducers({ counter: counterSlice.reducer, cocktails: cocktailsSlice.reducer })
 
-const customizedMiddleware = getDefaultMiddleware({
-  thunk: {
-    extraArgument: {
-      apiFetch: getApiFetcher(() => {
-        console.log(`FAILED AND CAUGHT BY MIDDLEWARE`);
-      })
-    },
-  },
-  serializableCheck: false
-})
+const onApiError = (error) => {
+  if (error.message === '404') {
+    store.dispatch(cocktailsSlice.actions.fail('404 CAUGHT BY MIDDLEWARE'))
+  } else {
+    throw error
+  }
+}
 
 export const store = configureStore(
   {
     reducer: rootReducer,
-    middleware: customizedMiddleware,
+    middleware: getDefaultMiddleware({
+      thunk: {
+        extraArgument: {
+          getRandomCocktail: getRandomCocktail(onApiError)
+        },
+      },
+      serializableCheck: false
+    }),
     devTools: true,
   }
 )
 
-const fetchCocktail = () => async (dispatch, getState, extraArg) => {
+// THUNK
+const fetchCocktail = () => async (dispatch, getState, extraThunkArg) => {
+  dispatch(cocktailsSlice.actions.start())
   try {
-    const fetcher = await extraArg.apiFetch
-    const response = await fetcher('random.php')
-    console.log("fetchCocktail -> response", response)
-    // const response = await cocktailAPI.getRandomCocktail()
-    const newCocktail = response['0']
-    if (!newCocktail) {
-      throw new Error(`That ain't a cocktail`)
+    const response = await extraThunkArg.getRandomCocktail()
+    if (response === undefined || response === null) {
+      return
     }
-    dispatch(cocktailsSlice.actions.add(newCocktail))
-  } catch (err) {
-    console.log("THUNK ERROR", err)
+    dispatch(cocktailsSlice.actions.success(response))
+  } catch (error) {
+    console.log("THUNK ERROR", error)
+    dispatch(cocktailsSlice.actions.fail(error.message))
   }
 }
 

@@ -1,7 +1,8 @@
 
-export const getApiFetcher = (onAuthFailure) => async (url, opts) => {
+export const getApiFetcher = (onGetRandomCocktailFailure) => async (url, opts) => {
+  // const getToken = await getTokenSilently()
   // const headers = {
-  //   token: 'fake token'
+  //   token: getToken,
   // }
   // const combinedOptions = Object.assign({}, { headers }, opts)
   try {
@@ -9,20 +10,26 @@ export const getApiFetcher = (onAuthFailure) => async (url, opts) => {
     if (response.statusCode === 401) {
       throw Error('rejected')
     }
-    return response.json()
+    const data = await response.json()
+    return data.drinks
   } catch (error) {
     if (error.message === 'rejected') {
-      onAuthFailure()
+      onGetRandomCocktailFailure()
       return
     }
     throw error
   }
 }
 
-function getTokenSilently() {
-  const response = new Promise
-  setTimeout(() => {
-    response.resolve('fakeToken')
-  }, 800);
-  return response
+function getTokenSilently(toFail) {
+  const promise = new Promise(function (resolve, reject) {
+    if (toFail === false) {
+      reject("Rejected in implementation of getTokenSilently")
+    }
+    //do something
+    setTimeout(() => {
+      resolve('fakeToken')
+    }, 800);
+  });
+  return promise
 }

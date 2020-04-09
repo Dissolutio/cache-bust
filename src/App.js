@@ -10,12 +10,20 @@ import packageJson from '../package.json';
 function App() {
 
   const dispatch = useDispatch()
+
   const count = useSelector((state) => {
     return state.counter
   })
   const cocktails = useSelector((state) => {
-    return state.cocktails
+    return state.cocktails.cocktails
   })
+  const cocktailsLoading = useSelector((state) => {
+    return state.cocktails.loading
+  })
+  const cocktailsError = useSelector((state) => {
+    return state.cocktails.error
+  })
+
   const cocktailsArr = Object.values(cocktails)
 
   const handleIncrement = () => {
@@ -39,6 +47,7 @@ function App() {
       <div>
         <h2>COCKTAILS</h2>
         <button onClick={handleFetchCocktail}>Get another cocktail</button>
+        <div style={{ color: 'red' }}>{cocktailsError}</div>
         <ul>
           {cocktailsArr.map(cocktail => {
             return (
@@ -46,6 +55,7 @@ function App() {
             )
           })}
         </ul>
+
       </div>
 
       <div>
